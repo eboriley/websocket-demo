@@ -9,6 +9,25 @@
 // };
 
 const socket = io('ws://localhost:8080');
+let id = '';
+let guestId = localStorage.getItem('guestId');
+function generateID() {
+  axios
+    .get('http://localhost:8080/get-id')
+    .then((response) => {
+      id = response.data;
+      console.log(id);
+      localStorage.setItem('guestId', id);
+      guestId = localStorage.getItem('guestId');
+      console.log(guestId);
+    })
+    .catch((error) => console.error(error));
+}
+if (!guestId) {
+  generateID();
+} else {
+  console.log(guestId);
+}
 
 socket.on('message', (text) => {
   const el = document.createElement('li');
@@ -17,6 +36,10 @@ socket.on('message', (text) => {
 });
 
 document.querySelector('button').onclick = () => {
-  const text = document.querySelector('input').value;
-  socket.emit('message', text);
+  const user = {
+    id: guestId,
+    message: '',
+  };
+  user.message = document.querySelector('input').value;
+  socket.emit('message', JSON.stringify(user));
 };

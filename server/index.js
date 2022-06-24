@@ -6,10 +6,23 @@
 //   });
 // });
 
-const http = require('http').createServer();
-
+const express = require('express');
+const app = express();
+const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
+const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
   cors: { origin: '*' },
+});
+
+const corsOption = {
+  origin: ['*'],
+};
+app.use(cors(corsOption));
+app.use(cors());
+
+app.get('/get-id', (req, res) => {
+  res.json(uuidv4());
 });
 
 io.on('connection', (socket) => {
@@ -17,7 +30,11 @@ io.on('connection', (socket) => {
 
   socket.on('message', (message) => {
     console.log(message);
-    io.emit('message', `${socket.id.substr(0, 2)} said ${message}`);
+    const text = JSON.parse(message);
+    socket.broadcast.emit(
+      'message',
+      `${text.id} said ${text.message}`
+    );
   });
 });
 
