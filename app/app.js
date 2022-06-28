@@ -29,10 +29,16 @@ if (!guestId) {
   console.log(guestId);
 }
 
+socket.on('connectToRoom', (data) => {
+  const para = document.createElement('p');
+  para.innerText = data;
+  document.querySelector('ul').appendChild(para);
+});
+
 socket.on('message', (text) => {
   const el = document.createElement('li');
   el.innerHTML = text;
-  document.querySelector('ul').appendChild(el);
+  document.body.appendChild(el);
 });
 
 document.querySelector('button').onclick = () => {
@@ -42,4 +48,9 @@ document.querySelector('button').onclick = () => {
   };
   user.message = document.querySelector('input').value;
   socket.emit('message', JSON.stringify(user));
+};
+
+document.getElementById('join-room').onclick = () => {
+  const room = document.getElementById('room-name').value;
+  socket.emit('join', JSON.stringify(room));
 };

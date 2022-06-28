@@ -25,16 +25,48 @@ app.get('/get-id', (req, res) => {
   res.json(uuidv4());
 });
 
+const rooms = [];
+
 io.on('connection', (socket) => {
   console.log('a user connected');
+  let roomNum = 0;
+  // io.sockets
+  //   .in('room-', roomno)
+  //   .emit('connectToRoom', 'you are in room no ' + roomno);
+  socket.on('join', function (roomno) {
+    const room = {
+      id: uuidv4(),
+      noOfClients: roomno,
+      availableSpace: 0,
+    };
+
+    console.log(room);
+
+    if (rooms.length > 0) {
+      const roomsLikeUserChoiceOfRoom = rooms.find(
+        (r) => r.noOfClients === roomno
+      );
+      roomsLikeUserChoiceOfRoom.forEach((room) => {
+        if (room.availableSpace <= room) {
+          socket.join(room.id);
+          roomNum = room.noOfClients;
+          socket.emit(
+            'connectToRoom',
+            'you are in room no ' + room.id
+          );
+          room.availableSpace++;
+        }
+      });
+    }
+    socket.join(room.id);
+    roomNum = room.noOfClients;
+    socket.emit('connectToRoom', 'you are in room no ' + room.id);
+  });
 
   socket.on('message', (message) => {
     console.log(message);
     const text = JSON.parse(message);
-    socket.broadcast.emit(
-      'message',
-      `${text.id} said ${text.message}`
-    );
+    io.to(roomNum).emit('message', `${text.id} said ${text.message}`);
   });
 });
 
