@@ -29,47 +29,97 @@ const rooms = [];
 
 io.on('connection', (socket) => {
   console.log('a user connected');
-  let roomNum = 0;
-  // io.sockets
-  //   .in('room-', roomno)
-  //   .emit('connectToRoom', 'you are in room no ' + roomno);
+
   socket.on('join', function (roomno) {
-    const room = {
-      id: uuidv4(),
-      noOfClients: roomno,
-      availableSpace: 0,
-    };
-
-    console.log(room);
-
-    if (rooms.length > 0) {
-      const roomsLikeUserChoiceOfRoom = rooms.find(
-        (r) => r.noOfClients === roomno
+    if (rooms.length >= 1) {
+      const roomsLikeUserChoiceOfRoom = searchRooms(
+        roomno,
+        socket,
+        io
       );
-      roomsLikeUserChoiceOfRoom.forEach((room) => {
-        if (room.availableSpace <= room) {
-          socket.join(room.id);
-          roomNum = room.noOfClients;
-          socket.emit(
-            'connectToRoom',
-            'you are in room no ' + room.id
-          );
-          room.availableSpace++;
-        }
-      });
+      addClientToChoiceOfRoom(roomsLikeUserChoiceOfRoom, socket, io);
     }
-    socket.join(room.id);
-    roomNum = room.noOfClients;
-    socket.emit('connectToRoom', 'you are in room no ' + room.id);
+    if (rooms.length === 0) {
+      createRoom(roomno, socket, io);
+    }
   });
 
   socket.on('message', (message) => {
     console.log(message);
     const text = JSON.parse(message);
-    io.to(roomNum).emit('message', `${text.id} said ${text.message}`);
+    io.to(text.roomId).emit(
+      'message',
+      `${text.id} said ${text.message}`
+    );
   });
 });
 
 http.listen(8080, () =>
   console.log('listening on port http://localhost:8080')
 );
+
+function createRoom(roomno, socket, io) {
+  let roomOpt = JSON.parse(roomno);
+  const room = {
+    id: uuidv4(),
+    clientOpt: parseInt(roomOpt),
+    availableSpace: parseInt(roomOpt) - 1,
+  };
+  console.log(room);
+  socket.join(room.id);
+
+  io.to(room.id).emit(
+    'connectToRoom',
+    'you are in room no ' + room.id
+  );
+
+  io.to(room.id).emit('roomID', room.id);
+
+  rooms.push(room);
+  console.log(rooms);
+}
+
+// let roomsLikeUserChoiceOfRoom = rooms.find((room) => {
+//   if (room.clientOpt === 2) {
+//     if (room.availableSpace > 0) {
+//       return room;
+//     }
+//     return false;
+//   }
+// });
+
+function searchRooms(roomno, socket, io) {
+  let roomOpt = JSON.parse(roomno);
+  for (let room of rooms) {
+    if (room.clientOpt === parseInt(roomOpt)) {
+      if (room.availableSpace > 0) {
+        return room;
+      } else createRoom(roomno, socket, io);
+    }
+  }
+}
+
+// console.log(rooms);
+
+function addClientToChoiceOfRoom(
+  roomsLikeUserChoiceOfRoom,
+  socket,
+  io
+) {
+  if (roomsLikeUserChoiceOfRoom) {
+    for (let room of rooms) {
+      if (room.id === roomsLikeUserChoiceOfRoom.id) {
+        socket.join(room.id);
+
+        io.to(room.id).emit(
+          'connectToRoom',
+          'you are in room no ' + room.id
+        );
+
+        io.to(room.id).emit('roomID', room.id);
+        room.availableSpace -= 1;
+        console.log(rooms);
+      }
+    }
+  }
+}

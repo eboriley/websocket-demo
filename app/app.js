@@ -42,9 +42,11 @@ socket.on('message', (text) => {
 });
 
 document.querySelector('button').onclick = () => {
+  const roomId = localStorage.getItem('roomId');
   const user = {
     id: guestId,
     message: '',
+    roomId: roomId,
   };
   user.message = document.querySelector('input').value;
   socket.emit('message', JSON.stringify(user));
@@ -54,3 +56,7 @@ document.getElementById('join-room').onclick = () => {
   const room = document.getElementById('room-name').value;
   socket.emit('join', JSON.stringify(room));
 };
+
+socket.on('roomID', (data) => {
+  localStorage.setItem('roomId', data);
+});
