@@ -37,7 +37,14 @@ io.on('connection', (socket) => {
         socket,
         io
       );
-      addClientToChoiceOfRoom(roomsLikeUserChoiceOfRoom, socket, io);
+      if (!roomsLikeUserChoiceOfRoom) {
+        createRoom(roomno, socket, io);
+      } else
+        addClientToChoiceOfRoom(
+          roomsLikeUserChoiceOfRoom,
+          socket,
+          io
+        );
     }
     if (rooms.length === 0) {
       createRoom(roomno, socket, io);
@@ -79,27 +86,17 @@ function createRoom(roomno, socket, io) {
   console.log(rooms);
 }
 
-// let roomsLikeUserChoiceOfRoom = rooms.find((room) => {
-//   if (room.clientOpt === 2) {
-//     if (room.availableSpace > 0) {
-//       return room;
-//     }
-//     return false;
-//   }
-// });
-
-function searchRooms(roomno, socket, io) {
+function searchRooms(roomno) {
   let roomOpt = JSON.parse(roomno);
   for (let room of rooms) {
     if (room.clientOpt === parseInt(roomOpt)) {
       if (room.availableSpace > 0) {
         return room;
-      } else createRoom(roomno, socket, io);
+      }
     }
   }
+  return false;
 }
-
-// console.log(rooms);
 
 function addClientToChoiceOfRoom(
   roomsLikeUserChoiceOfRoom,
@@ -118,8 +115,18 @@ function addClientToChoiceOfRoom(
 
         io.to(room.id).emit('roomID', room.id);
         room.availableSpace -= 1;
-        console.log(rooms);
+        console.table(rooms);
       }
     }
   }
 }
+
+// const arr = [
+//   { id: 1, name: 'roku' },
+//   { id: 2, name: 'ben' },
+//   { id: 3, name: 'matt' },
+// ];
+// console.table(arr);
+// const twoIndex = arr.findIndex((item) => item.id === 2);
+// arr.splice(twoIndex, 1);
+// console.table(arr);
